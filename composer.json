@@ -1,0 +1,23 @@
+{
+    "name": "raffaelj/cockpit-babel",
+    "type": "cockpit-module",
+    "description": "Manage translations of Cockpit CMS v1 modules",
+    "keywords": ["cockpit", "cpmultiplane"],
+    "homepage": "https://github.com/raffaelj/cockpit_Babel",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Raffael Jesche",
+            "homepage": "https://www.rlj.me"
+        }
+    ],
+    "require": {
+        "composer/installers": "^1.9"
+    },
+    "config": {
+        "vendor-dir": "lib/vendor"
+    },
+    "extra": {
+        "installer-name": "Babel"
+    }
+}
