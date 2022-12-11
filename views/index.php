@@ -336,7 +336,8 @@
                         <!-- TODO: info text -->
                         <button type="button" class="uk-button uk-button-primary" data-context="true" onclick="{ forceUpdateData }">@lang('Rebuild index from source with context')</button>
                     </div>
-
+<!-- TODO: tinymce i18n files -->
+<!-- TODO: date formats with moment.js -->
                 </div>
             </div>
         </div>
