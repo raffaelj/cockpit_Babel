@@ -2,10 +2,10 @@
 
 $this->on('admin.init', function() {
 
-    if ($this->module('cockpit')->hasaccess('babel', 'manage')) {
+    // bind admin routes
+    $this->bindClass('Babel\\Controller\\Admin', 'babel');
 
-        // bind admin routes
-        $this->bindClass('Babel\\Controller\\Admin', 'babel');
+    if ($this->module('cockpit')->hasaccess('babel', 'manage')) {
 
         // add settings entry
         $this->on('cockpit.view.settings.item', function () {
@@ -14,9 +14,9 @@ $this->on('admin.init', function() {
 
     }
 
-    // load i18n
-    $this->on('before', function() {
-        $this->helper('babel')->loadI18n();
-    });
+});
 
+// load i18n
+$this->on('before', function() {
+    $this->helper('babel')->loadI18n();
 });

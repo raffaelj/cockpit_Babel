@@ -4,11 +4,23 @@ namespace Babel\Helper;
 
 class Babel extends \Lime\Helper {
 
+    public $isCockpitV2;
+
+    public function initialize() {
+        $this->isCockpitV2 = class_exists('Cockpit');
+    }
+
     public function getModulesDirs() {
 
         $modules = [];
 
-        $dirs = [COCKPIT_DIR.'/modules', COCKPIT_ENV_ROOT.'/addons'];
+        if (!$this->isCockpitV2) {
+            $dirs = [COCKPIT_DIR.'/modules', COCKPIT_ENV_ROOT.'/addons'];
+        }
+        else {
+            // TODO: custom addons dir
+            $dirs = [APP_DIR.'/modules', APP_DIR.'/addons'];
+        }
 
         if ($customModulesPath = $this->app->retrieve('loadmodules')) {
             $dirs[] = $customModulesPath;
@@ -71,15 +83,21 @@ class Babel extends \Lime\Helper {
 
                     $contents = file_get_contents($file->getRealPath());
 
-                    // cockpit v2
-                    // preg_match_all('/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/', $contents, $matches);
+                    if ($this->isCockpitV2) {
+                        // cockpit v2
+                        $regex = '/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+                    }
+                    else {
 
-                    // cockpit v1
-                    // preg_match_all('/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/', $contents, $matches);
+                        // cockpit v1
+                        // $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
 
-                    // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
-                    // see: https://regex101.com/r/Gtf5L6/1
-                    preg_match_all('/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/', $contents, $matches);
+                        // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
+                        // see: https://regex101.com/r/Gtf5L6/1
+                        $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+
+                    }
+                    preg_match_all($regex, $contents, $matches);
 
                     if (!isset($matches[2])) continue;
 
@@ -142,10 +160,28 @@ class Babel extends \Lime\Helper {
 
         $languages = [];
 
+        // cockpit v2
+        if ($this->isCockpitV2) {
+            $locales = $this->helper('locales')->locales();
+
+            foreach ($locales as $locale) {
+                if ($locale['i18n'] == 'default') continue;
+                $languages[] = [
+                    'code'    => $locale['i18n'],
+                    'name'    => $locale['name'],
+                ];
+
+            }
+            return $languages;
+        }
+
+        // cockpit v1
         $defaultLang = $this->app->retrieve('i18n', 'en');
         $currentLang = $this->app->helper('i18n')->locale;
 
-        foreach ($this->app['languages'] as $l => $label) {
+        $appLanguages = $this->app['languages'] ?? [];
+
+        foreach ($appLanguages as $l => $label) {
 
             $code = $l == 'default' ? $defaultLang : $l;
             $languages[] = [
@@ -268,7 +304,12 @@ class Babel extends \Lime\Helper {
         $i18n = $this->app->helper('i18n');
 
         if (!$locale) {
-            $locale = $this->app->module('cockpit')->getUser('i18n', $i18n->locale);
+            if (!$this->isCockpitV2) {
+                $locale = $this->app->module('cockpit')->getUser('i18n', $i18n->locale);
+            }
+            else {
+                $locale = $this->helper('auth')->getUser('i18n', $i18n->locale);
+            }
         }
 
         if ($modules) {
@@ -278,8 +319,10 @@ class Babel extends \Lime\Helper {
 
         if ($translationspath = $this->app->path("#config:i18n/{$locale}.php")) {
 
+            // load @meta and unassigned strings
             $i18n->load($translationspath, $locale);
 
+            // load i18n strings for active modules
             foreach ($this->app->retrieve('modules')->getArrayCopy() as $m) {
 
                 $name = basename($m->_dir);
