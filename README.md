@@ -1,12 +1,12 @@
 # Babel addon for Cockpit CMS v1
 
-Manage translations of [Cockpit CMS v1][1] and [CpMultiplane][2] modules.
+Manage translations of [Cockpit CMS v1][1], [Cockpit CMS v2][4] and [CpMultiplane][2] modules with a graphical user interface.
 
 ## Usage
 
 * Login as admin (or with manage rights for babel)
 * Go to "Settings" --> "Babel"
-* If you already have i18n files in `config/cockpit/i18n/`
+* If you use Cockpit CMS v1
   * Click on "Other" tab
   * Click on "Restructure i18n files" button. Now the Babel addon is initialized and the file/folder structure is adapted to new locations.
 * Translate strings and click the "Save" button
@@ -106,22 +106,16 @@ __File/folder structure:__
 ├── config
 |   ├── cockpit
 |   |   └── i18n
-|   |       ├── de.php (empty dummy file)
-|   |       └── fr.php (empty dummy file)
+|   |       ├── de.php (must exist - empty dummy file)
+|   |       └── fr.php (must exist - empty dummy file)
 |   ├── i18n
 |   |   ├── {module}
 |   |   |   ├── de.php
 |   |   |   └── fr.php
-|   |   ├── de.php (@meta and unassigned strings)
-|   |   └── fr.php (@meta and unassigned strings)
+|   |   ├── de.php (must exist - @meta and unassigned strings)
+|   |   └── fr.php (must exist - @meta and unassigned strings)
 |   └── config.php
-├── storage
-|   └── assets
-|       └── cockpit
-|           └── i18n
-|               └── tinymce
-|                   ├── de.js (not automated, yet)
-|                   └── fr.js (not automated, yet)
+├── storage/assets/cockpit/i18n/tinymce/{locale.js} (not automated, yet)
 ```
 
 ## Installation
@@ -135,14 +129,14 @@ cd path/to/cockpit
 git clone https://github.com/raffaelj/cockpit_Babel.git addons/Babel
 ```
 
-### via cp cli
+### via cp cli (Cockpit CMS v1)
 
 ```bash
 cd path/to/cockpit
 ./cp install/addon --name Babel --url https://github.com/raffaelj/cockpit_Babel/archive/main.zip
 ```
 
-### via composer
+### via composer (Cockpit CMS v1)
 
 Make sure, that the path to cockpit addons is defined in your projects' `composer.json` file.
 
@@ -175,3 +169,4 @@ See [LICENSE][3] for more information.
 [1]: https://github.com/agentejo/cockpit/
 [2]: https://github.com/raffaelj/CpMultiplane/
 [3]: https://github.com/raffaelj/cockpit_Babel/blob/master/LICENSE
+[4]: https://github.com/Cockpit-HQ/Cockpit

@@ -1,7 +1,7 @@
 {
     "name": "raffaelj/cockpit-babel",
     "type": "cockpit-module",
-    "description": "Manage translations of Cockpit CMS v1 modules",
+    "description": "Manage translations of Cockpit CMS v1 and v2 modules",
     "keywords": ["cockpit", "cpmultiplane"],
     "homepage": "https://github.com/raffaelj/cockpit_Babel",
     "license": "MIT",

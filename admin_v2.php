@@ -15,7 +15,7 @@ $this->on('app.settings.collect', function($settings) {
 
 });
 
-// add permissions
+// ACL
 $this->on('app.permissions.collect', function($permissions) {
 
     $permissions['Babel'] = [
