@@ -69,11 +69,11 @@
 
             <kiss-container>
                 <div class="kiss-flex kiss-flex-middle">
-                    <div class="kiss-button-group">
+<!--                    <div class="kiss-button-group">
                         <a class="kiss-button" @click="addString()">
                             <?=t('Add string')?>
                         </a>
-                    </div>
+                    </div>-->
                     <div class="kiss-flex-1"></div>
                     <div class="kiss-button-group">
                         <a class="kiss-button" href="<?=$this->route("/system")?>">
@@ -196,10 +196,10 @@
                     VueView.ui.offcanvas('system:assets/dialogs/json-viewer.js', {data: this.translations}, {}, {flip: true, size: 'large'})
                 },
 
-                addString() {
-                    console.log('open modal to add new string');
-                    // modal.show();
-                },
+                // addString() {
+                //     console.log('open modal to add new string');
+                //     // modal.show();
+                // },
 
                 submit(e) {
 
