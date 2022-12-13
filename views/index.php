@@ -455,11 +455,11 @@
             this.modules = Object.keys(this.stringsPerModule);
             if (!this.modules.includes('unassigned')) this.modules.push('unassigned');
 
+            $this.stringsPerModule['unassigned'] = $this.stringsPerModule['unassigned'] || {};
+            $this.stringsPerModule['unassigned'].strings = $this.stringsPerModule['unassigned'].strings || [];
+
             // add unassigned strings and @meta keys to virtual "unassigned" module
             Object.keys($this.knownTranslations).forEach(function(string) {
-
-                $this.stringsPerModule['unassigned'] = $this.stringsPerModule['unassigned'] || {};
-                $this.stringsPerModule['unassigned'].strings = $this.stringsPerModule['unassigned'].strings || [];
 
                 // add unassigned keys
                 var isAssigned = false;
