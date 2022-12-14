@@ -14,6 +14,19 @@ $this->on('admin.init', function() {
 
     }
 
+    // fix missing language names in user i18n selection
+    $this->on('app.render.view/cockpit:views/accounts/account.php with cockpit:views/layouts/app.php', function($template, &$slots) {
+
+        $slots['languages'] = array_map(function($l) {
+            if ($path = $this->path("#config:i18n/{$l['i18n']}.php")) {
+                $lang = include($path);
+                $l['language'] = $lang['@meta']['language'] ?? $l['i18n'];
+            }
+            return $l;
+        }, $slots['languages']);
+
+    });
+
 });
 
 // load i18n
