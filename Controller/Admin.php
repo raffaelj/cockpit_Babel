@@ -42,7 +42,10 @@ class Admin extends \Cockpit\AuthController {
 
         if (!$data) return false;
 
-        return $this->app->helper('babel')->save($data);
+        $translations = $this->app->helper('babel')->save($data);
+        $dictionaries = $this->app->helper('babel')->getLocalizedStrings();
+
+        return compact('translations', 'dictionaries');
 
     }
 

@@ -211,8 +211,10 @@
 
                             App.ui.notify("Saving successful", "success");
 
-                            // TODO: update knownTranslations after submit
-                            this.translations = data;
+                            this.translations      = data.translations;
+                            this.knownTranslations = data.dictionaries;
+
+                            this.updateStrings();
 
                         } else {
                             App.ui.notify("Saving failed.", "danger");
