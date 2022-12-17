@@ -54,7 +54,7 @@
                 </span>
             </span>
 
-            <div class="uk-margin">
+            <div class="uk-margin" show="{ tab == 'modules' }">
                 @lang('Modules:')
                 <span class="">
                     <button type="button" data-filter-module="_all" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small" disabled="{ !filterModules.length }">@lang('All')</button>
@@ -78,7 +78,7 @@
         <div if="{ !loading }">
 
             <div show="{ tab == 'modules' }">
-                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }">
+                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }" data-tab="{ moduleName }">
 
                     <h3 class="uk-panel-title" if="{ moduleName != 'unassigned' }">{ moduleName }</h3>
                     <h3 class="uk-panel-title" if="{ moduleName == 'unassigned' }">@lang('Unassigned strings')</h3>
@@ -382,8 +382,8 @@
                         $this.stringsPerModule['unassigned'].strings.push($this.newString);
                         $this.newString = '';
 
-                        // switch to "unassigned" tab and focus first input of new string
-                        $this.tab = 'unassigned';
+                        // switch to "unassigned" module and focus first input of new string
+                        $this.tab = 'modules';
                         $this.update();
                         var newInput = document.querySelector('div[data-tab=unassigned] .uk-grid > div:last-child input');
                         if (newInput) newInput.focus();
