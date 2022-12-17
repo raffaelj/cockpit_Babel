@@ -35,14 +35,16 @@
                 <li class="{ tab=='strings' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="strings">@lang('All strings')</a></li>
                 <li class="{ tab=='meta' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="meta">@lang('Meta')</a></li>
                 <li class="{ tab=='other' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="other">@lang('Other')</a></li>
+                <li class=""><a class="" onclick="{ showEntryObject }">@lang('JSON')</a></li>
             </ul>
         </div>
 
         <div class="uk-margin">
-            @lang('Filters:')
+            <button type="button" class="uk-button uk-icon-{ layout == 'grid' ? 'th' : 'list' }" onclick="{ toggleLayout }" title="@lang('Toggle layout')" data-uk-tooltip>
+            </button>
             <button type="button" class="uk-button uk-button-small uk-button-{ highlightEmptyStrings ? 'success' : 'primary' }" onclick="{ toggleHighlightEmptyStrings }">@lang('Highlight empty fields')</button>
             <button type="button" class="uk-button uk-button-small uk-button-{ hideCompletedStrings ? 'success' : 'primary' }" onclick="{ toggleHideNonEmptyStrings }">@lang('Hide completed translations')</button>
-            <button type="button" class="uk-button uk-button-small uk-button-{ allowDeletions ? 'success' : 'primary' }" onclick="{ toggleAllowDeletions }">@lang('Allow deletions')</button>
+            <button type="button" class="uk-button uk-button-small uk-button-{ allowDeletions ? 'success' : 'primary' }" onclick="{ toggleAllowDeletions }">@lang('Allow deletions of unassigned strings')</button>
 
             <span class="uk-display-inline-block">
                 @lang('Languages:')
@@ -66,11 +68,6 @@
 
         </div>
 
-        <div class="uk-margin uk-text-right">
-            <button type="button" class="uk-button uk-button-large uk-button-primary" onclick="{ addString }">@lang('Add string')</button>
-            <button type="button" class="uk-button uk-button-large" onclick="{ showEntryObject }">@lang('Show JSON')</button>
-        </div>
-
         <div if="{ loading }">
         loading...
         </div>
@@ -80,16 +77,15 @@
             <div show="{ tab == 'modules' }">
                 <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }" data-tab="{ moduleName }">
 
-                    <h3 class="uk-panel-title" if="{ moduleName != 'unassigned' }">{ moduleName }</h3>
-                    <h3 class="uk-panel-title" if="{ moduleName == 'unassigned' }">@lang('Unassigned strings')</h3>
+                    <h3 class="uk-panel-title">{ moduleName != 'unassigned' ? moduleName : App.i18n.get('Unassigned strings') }</h3>
                     <span class="uk-panel-badge uk-badge uk-badge-notification">{ stringsPerModule[moduleName].strings.length }</span>
 
-                    <div class="uk-grid uk-grid-small">
+                    <div class="uk-grid uk-grid-small uk-grid-match">
 
-                        <div class="uk-width-large-1-2 uk-width-xlarge-1-3 uk-grid-margin" each="{ string,idx in stringsPerModule[moduleName].strings }" show="{ checkFilterHideCompleted(this) }" if="{ string.substr(0,1) != '@' }">
-                            <div class="uk-panel-box uk-panel-card strings-box">
+                        <div class="uk-width-1-1 { layout == 'grid' && 'uk-width-large-1-2 uk-width-xlarge-1-3' } uk-grid-margin" each="{ string,idx in stringsPerModule[moduleName].strings }" show="{ checkFilterHideCompleted(this) }" if="{ string.substr(0,1) != '@' }">
+                            <div class="uk-panel-box uk-panel-card strings-box uk-panel-header strings-box">
                                 <fieldset>
-                                    <legend if="{ !allowDeletions || moduleName != 'unassigned' }">{ string }</legend>
+                                    <legend class="uk-panel-title" if="{ !allowDeletions || moduleName != 'unassigned' }">{ string }</legend>
                                     <div class="uk-flex" if="{ allowDeletions && moduleName == 'unassigned' }">
                                         <legend class="uk-flex-item-1">{ string }</legend>
                                         <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')"></a>
@@ -102,13 +98,20 @@
                                     </div>
                                 </fieldset>
 
-                                <div class="uk-panel-box-footer" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] }">
-                                    <span>@lang('context:')</span>
-                                    <ul class="uk-list">
-                                        <li each="{ file in stringsPerModule[moduleName].context[idx] }">
-                                            <code>{ file }</code>
-                                        </li>
-                                    </ul>
+                                { (listOfAffectedModules = listModulesContainingString(string, moduleName)) && '' }
+                                <div class="uk-panel-box-footer" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] || listOfAffectedModules.length }">
+                                    <div class="uk-text-small" if="{ listOfAffectedModules.length }">
+                                        @lang('Modules:')
+                                        { listOfAffectedModules.join(', ') }
+                                    </div>
+                                    <div class="" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] }">
+                                        <span>@lang('context:')</span>
+                                        <ul class="uk-list">
+                                            <li each="{ file in stringsPerModule[moduleName].context[idx] }">
+                                                <code>{ file }</code>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
 
                             </div>
@@ -117,26 +120,40 @@
                 </div>
             </div>
 
-            <div show="{tab=='strings'}">
+            <div show="{ tab == 'strings' }">
                 <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card">
 
                     <h3 class="uk-panel-title">@lang('All strings')</h3>
                     <span class="uk-panel-badge uk-badge uk-badge-notification">{ Object.keys(knownTranslations).length }</span>
-                    <div class="uk-form-row"  each="{ translations,string in knownTranslations }" if="{ string.substr(0,1) != '@' }" show="{ checkFilterHideCompleted(this) }">
-                        <div class="uk-panel-box uk-panel-card strings-box">
-                            <fieldset>
-                                <legend>
-                                    <span class="uk-margin-right">{ string }</span>
-                                    <span class="uk-badge uk-badge-outline uk-float-right uk-margin-small-left" each="{ module in modules }" aria-hidden="true" if="{ stringsPerModule[module].strings.includes(string) && module != 'unassigned' }">
-                                        {module}
-                                    </span>
-                                </legend>
 
-                                <div class="uk-flex uk-flex-middle" each="{ lang in locales }" show="{ checkLangFilter(lang) }">
-                                    <label class="lang_code_label" if="{ lang != 'en' }">{ lang }:</label>
-                                    <input class="uk-width-1-1 { highlightEmptyStrings && !(knownTranslations[string] && knownTranslations[string][lang]) ? 'uk-form-danger' : '' }" type="text" bind="knownTranslations[{escaped(string)}].{lang}" if="{ lang != 'en' }" onfocus="{ checkScroll }" />
+                    <div class="uk-grid uk-grid-small uk-grid-match">
+
+                        <div class="uk-width-1-1 { layout == 'grid' && 'uk-width-large-1-2 uk-width-xlarge-1-3' } uk-grid-margin" each="{ translations,string in knownTranslations }" if="{ string.substr(0,1) != '@' }" show="{ checkFilterHideCompleted(this) }">
+                            <div class="uk-panel-box uk-panel-card uk-panel-header strings-box">
+
+                                { (listOfAffectedModules = listModulesContainingString(string, 'unassigned')) && '' }
+
+                                <fieldset>
+
+                                    <legend class="uk-panel-title" if="{ !allowDeletions }">{ string }</legend>
+
+                                    <div class="uk-flex" if="{ allowDeletions && !listOfAffectedModules.length }">
+                                        <legend class="uk-flex-item-1">{ string }</legend>
+                                        <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')"></a>
+                                    </div>
+
+                                    <div class="uk-flex uk-flex-middle" each="{ lang in locales }" show="{ checkLangFilter(lang) }">
+                                        <label class="lang_code_label" if="{ lang != 'en' }">{ lang }:</label>
+                                        <input class="uk-width-1-1 { highlightEmptyStrings && !(knownTranslations[string] && knownTranslations[string][lang]) ? 'uk-form-danger' : '' }" type="text" bind="knownTranslations[{escaped(string)}].{lang}" if="{ lang != 'en' }" onfocus="{ checkScroll }" />
+                                    </div>
+                                </fieldset>
+                                <div class="uk-panel-box-footer" if="{ listOfAffectedModules.length }">
+                                    <div class="uk-text-small" if="{ listOfAffectedModules.length }">
+                                        @lang('Modules:')
+                                        { listOfAffectedModules.join(', ') }
+                                    </div>
                                 </div>
-                            </fieldset>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -330,11 +347,13 @@
         </div>
 
         <cp-actionbar>
-            <div class="uk-container uk-container-center">
+            <div class="uk-container uk-container-center uk-flex uk-flex-middle">
                 <button class="uk-button uk-button-large uk-button-primary">@lang('Save')</button>
                 <a class="uk-button uk-button-link" href="@route('/settings')">
                     <span>@lang('Cancel')</span>
                 </a>
+                <div class="uk-flex-item-1"></div>
+                <button type="button" class="uk-button uk-button-large" onclick="{ addString }">@lang('Add string')</button>
             </div>
         </cp-actionbar>
     </form>
@@ -367,6 +386,7 @@
         this.filterLangs = [];
 
         this.tab = 'modules';
+        this.layout = 'grid';
 
         this.on('mount', function() {
 
@@ -417,6 +437,8 @@
                     $this.knownTranslations[string] = $this.knownTranslations[string] ?? {};
 
                     $this.knownTranslations[string][locale] = value.trim();
+
+                    // TODO: update duplicates in other modules
                 }
             }
             else if (this.tab == 'strings') {
@@ -663,6 +685,20 @@
                 delete $this.translations.unassigned[lang][e.item.string];
             });
 
+        }
+
+        listModulesContainingString(str, moduleName = null) {
+
+            return this.modules.filter(module => {
+                if (moduleName && module == moduleName) return false;
+                return this.stringsPerModule[module].strings.includes(str);
+            });
+
+        }
+
+        toggleLayout(e) {
+            if (e) e.preventDefault();
+            this.layout = this.layout == 'grid' ? 'list' : 'grid';
         }
 
     </script>
