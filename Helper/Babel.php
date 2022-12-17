@@ -6,11 +6,16 @@ class Babel extends \Lime\Helper {
 
     public $isCockpitV2;
 
+    public $ksortOpts = SORT_STRING | SORT_FLAG_CASE;
+
     public function initialize() {
         $this->isCockpitV2 = class_exists('Cockpit');
     }
 
     public function getModulesDirs() {
+
+        static $modules;
+        if (!is_null($modules)) return $modules;
 
         $modules = [];
 
@@ -262,7 +267,7 @@ class Babel extends \Lime\Helper {
 
         }
 
-        ksort($strings, SORT_STRING | SORT_FLAG_CASE);
+        ksort($strings, $this->ksortOpts);
 
         return $strings;
 
@@ -274,22 +279,26 @@ class Babel extends \Lime\Helper {
 
         $modules = $this->getModulesNames();
 
-        foreach ($data as $moduleName => $value) {
+        foreach ($data as $moduleName => &$value) {
 
             if (!in_array($moduleName, $modules)) continue;
 
-            foreach ($value as $locale => $strings) {
+            foreach ($value as $locale => &$strings) {
 
-                ksort($strings, SORT_STRING | SORT_FLAG_CASE);
+                $strings = $this->removeEmptyStrings($strings);
+
+                ksort($strings, $this->ksortOpts);
 
                 $this->app->helper('fs')->write("#config:i18n/{$moduleName}/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
             }
         }
 
         if (isset($data['unassigned'])) {
-            foreach ($data['unassigned'] as $locale => $strings) {
+            foreach ($data['unassigned'] as $locale => &$strings) {
 
-                ksort($strings, SORT_STRING | SORT_FLAG_CASE);
+                $strings = $this->removeEmptyStrings($strings);
+
+                ksort($strings, $this->ksortOpts);
 
                 $this->app->helper('fs')->write("#config:i18n/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
             }
@@ -357,7 +366,7 @@ class Babel extends \Lime\Helper {
                 $tmp1 = include($translationspath);
                 $tmp2 = include($path);
                 $strings = array_merge($tmp2, $tmp1);
-                ksort($strings, SORT_STRING | SORT_FLAG_CASE);
+                ksort($strings, $this->ksortOpts);
 
                 $written = $fs->write("#config:i18n/{$i18n}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
 
@@ -406,7 +415,7 @@ class Babel extends \Lime\Helper {
                     $tmp1 = include($translationspath);
                     $tmp2 = include($path);
                     $strings = array_merge($tmp2, $tmp1);
-                    ksort($strings, SORT_STRING | SORT_FLAG_CASE);
+                    ksort($strings, $this->ksortOpts);
 
                     $written = $fs->write("#config:i18n/Multiplane/{$i18n}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
                 }
@@ -450,6 +459,17 @@ class Babel extends \Lime\Helper {
 
         return $path;
 
+    }
+
+    public function removeEmptyStrings($strings) {
+
+        return array_filter($strings, function($v) {
+
+            // @meta key
+            if (is_array($v)) return true;
+
+            return '' !== trim($v);
+        });
     }
 
 }
