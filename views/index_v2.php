@@ -188,10 +188,6 @@
 
                 },
 
-                // escaped(str) {
-                //     return "'" + str.replace(/(['\[\]])/g,"\\$1") + "'";
-                // },
-
                 showJSON() {
                     VueView.ui.offcanvas('system:assets/dialogs/json-viewer.js', {data: this.translations}, {}, {flip: true, size: 'large'})
                 },
