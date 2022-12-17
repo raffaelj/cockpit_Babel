@@ -1,3 +1,14 @@
+
+<!-- Fix targeted elements hiding behind <app-header> (when clicking on toc links in side bar) -->
+<style>
+    @media (min-width: 768px) {
+        :target {
+            padding-top: 70px;
+            margin-top: -70px;
+        }
+    }
+</style>
+
 <vue-view>
 
     <template>
