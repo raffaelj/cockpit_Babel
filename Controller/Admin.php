@@ -29,6 +29,7 @@ class Admin extends \Cockpit\AuthController {
         $localizedStrings = $this->app->helper('babel')->getLocalizedStrings();
 
         $modules = $this->app->helper('babel')->getModulesNames();
+        sort($modules);
         $modules[] = 'unassigned';
 
         $view = $this->isCockpitV2 ? 'babel:views/index_v2.php' : 'babel:views/index.php';

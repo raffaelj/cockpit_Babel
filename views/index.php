@@ -32,7 +32,6 @@
         <div class="uk-margin">
             <ul class="uk-tab uk-margin-large-bottom">
                 <li class="{ tab=='modules' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="modules">@lang('Modules')</a></li>
-                <li class="{ tab=='unassigned' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="unassigned">@lang('Unassigned strings')</a></li>
                 <li class="{ tab=='strings' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="strings">@lang('All strings')</a></li>
                 <li class="{ tab=='meta' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="meta">@lang('Meta')</a></li>
                 <li class="{ tab=='other' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="other">@lang('Other')</a></li>
@@ -42,7 +41,7 @@
         <div class="uk-margin">
             @lang('Filters:')
             <button type="button" class="uk-button uk-button-small uk-button-{ highlightEmptyStrings ? 'success' : 'primary' }" onclick="{ toggleHighlightEmptyStrings }">@lang('Highlight empty fields')</button>
-            <button type="button" class="uk-button uk-button-small uk-button-{ hideCompletedStrings ? 'success' : 'primary' }" onclick="{ toggleHideNonEmptyStrings }">@lang('Hide completed strings')</button>
+            <button type="button" class="uk-button uk-button-small uk-button-{ hideCompletedStrings ? 'success' : 'primary' }" onclick="{ toggleHideNonEmptyStrings }">@lang('Hide completed translations')</button>
             <button type="button" class="uk-button uk-button-small uk-button-{ allowDeletions ? 'success' : 'primary' }" onclick="{ toggleAllowDeletions }">@lang('Allow deletions')</button>
 
             <span class="uk-display-inline-block">
@@ -59,8 +58,8 @@
                 @lang('Modules:')
                 <span class="">
                     <button type="button" data-filter-module="_all" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small" disabled="{ !filterModules.length }">@lang('All')</button>
-                    <button type="button" data-filter-module="{ moduleName }" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small uk-margin-small-right { filterModules.length && checkModuleFilter(moduleName) ? 'uk-button-success' : '' }" each="{ moduleData,moduleName in stringsPerModule }" if="{ moduleName != 'unassigned' }">
-                        { moduleName }
+                    <button type="button" data-filter-module="{ moduleName }" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small uk-margin-small-right { filterModules.length && checkModuleFilter(moduleName) ? 'uk-button-success' : '' }" each="{ moduleName in modules }">
+                        { moduleName == 'unassigned' ? App.i18n.get('Unassigned') : moduleName }
                     </button>
                 </span>
             </div>
@@ -78,17 +77,23 @@
 
         <div if="{ !loading }">
 
-            <div show="{tab=='modules'}">
-                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleData,moduleName in stringsPerModule }" if="{ moduleName != 'unassigned' }" show="{ checkModuleFilter(moduleName) }">
+            <div show="{ tab == 'modules' }">
+                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }">
 
-                    <h3 class="uk-panel-title">{ moduleName }</h3>
-                    <span class="uk-panel-badge uk-badge uk-badge-notification">{ moduleData.strings.length }</span>
+                    <h3 class="uk-panel-title" if="{ moduleName != 'unassigned' }">{ moduleName }</h3>
+                    <h3 class="uk-panel-title" if="{ moduleName == 'unassigned' }">@lang('Unassigned strings')</h3>
+                    <span class="uk-panel-badge uk-badge uk-badge-notification">{ stringsPerModule[moduleName].strings.length }</span>
 
                     <div class="uk-grid uk-grid-small">
-                        <div class="uk-width-large-1-2 uk-width-xlarge-1-3 uk-grid-margin" each="{ string,idx in moduleData.strings }" show="{ checkFilterHideCompleted(this) }">
+
+                        <div class="uk-width-large-1-2 uk-width-xlarge-1-3 uk-grid-margin" each="{ string,idx in stringsPerModule[moduleName].strings }" show="{ checkFilterHideCompleted(this) }" if="{ string.substr(0,1) != '@' }">
                             <div class="uk-panel-box uk-panel-card strings-box">
                                 <fieldset>
-                                    <legend>{ string }</legend>
+                                    <legend if="{ !allowDeletions || moduleName != 'unassigned' }">{ string }</legend>
+                                    <div class="uk-flex" if="{ allowDeletions && moduleName == 'unassigned' }">
+                                        <legend class="uk-flex-item-1">{ string }</legend>
+                                        <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')"></a>
+                                    </div>
 
                                     <div class="uk-flex uk-flex-middle" each="{ lang in locales }" if="{ lang != 'en' }" show="{ checkLangFilter(lang) }">
                                         <label class="lang_code_label">{ lang }:</label>
@@ -97,10 +102,10 @@
                                     </div>
                                 </fieldset>
 
-                                <div class="uk-panel-box-footer" if="{ moduleData.context && moduleData.context[idx] }">
+                                <div class="uk-panel-box-footer" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] }">
                                     <span>@lang('context:')</span>
                                     <ul class="uk-list">
-                                        <li each="{ file in moduleData.context[idx] }">
+                                        <li each="{ file in stringsPerModule[moduleName].context[idx] }">
                                             <code>{ file }</code>
                                         </li>
                                     </ul>
@@ -137,35 +142,7 @@
                 </div>
             </div>
 
-            <div show="{tab=='unassigned'}" data-tab="unassigned">
-                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleData,moduleName in stringsPerModule }" if="{ moduleName == 'unassigned' }">
-
-                    <h3 class="uk-panel-title">@lang('Unassigned strings')</h3>
-                    <span class="uk-panel-badge uk-badge uk-badge-notification">{ moduleData.strings.length }</span>
-
-                    <div class="uk-grid uk-grid-small">
-                        <div class="uk-width-large-1-2 uk-width-xlarge-1-3 uk-grid-margin" each="{ string,idx in moduleData.strings }" show="{ checkFilterHideCompleted(this) }" if="{ string.substr(0,1) != '@' }">
-                            <div class="uk-panel uk-panel-box uk-panel-card strings-box">
-                                <fieldset>
-                                    <legend if="{ !allowDeletions }">{ string }</legend>
-                                    <div class="uk-flex" if="{ allowDeletions }">
-                                        <legend class="uk-flex-item-1">{ string }</legend>
-                                        <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')"></a>
-                                    </div>
-
-                                    <div class="uk-flex uk-flex-middle" each="{ lang in locales }" if="{ lang != 'en' }" show="{ checkLangFilter(lang) }">
-                                        <label class="lang_code_label">{ lang }:</label>
-
-                                        <input class="uk-width-1-1 { highlightEmptyStrings && !(knownTranslations[string] && knownTranslations[string][lang]) ? 'uk-form-danger' : '' }" type="text" bind="translations.{moduleName}.{lang}[{escaped(string)}]" onfocus="{ checkScroll }" />
-                                    </div>
-                                </fieldset>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div show="{tab=='meta'}">
+            <div show="{ tab == 'meta' }">
                 <div class="uk-panel-box uk-panel-box-primary uk-panel-card uk-margin">
 
                     <h2 class="uk-panel-title">@lang('meta')</h2>
@@ -316,7 +293,7 @@
                 </div>
             </div>
 
-            <div show="{tab=='other'}">
+            <div show="{ tab == 'other' }">
                 <div class="uk-panel-box uk-panel-box-primary uk-panel-card uk-margin">
 
                     <h3 class="uk-panel-title">@lang('Other')</h3>
@@ -374,7 +351,7 @@
 
         this.loading = true;
         this.stringsPerModule = {};
-        this.modules = [];
+        this.modules = {{ json_encode($modules) }};
 
         this.translations = {};
 
@@ -429,6 +406,7 @@
         this.on('bindingupdated', function(args) {
 
             if (this.tab == 'modules') {
+
                 var matches = args[0].match(/^translations\.(?<module>.*)\.(?<locale>.*)\['(?<string>.*)'\]$/);
 
                 if (matches && matches.groups) {
@@ -437,23 +415,19 @@
                         value  = args[1];
 
                     $this.knownTranslations[string] = $this.knownTranslations[string] ?? {};
-                    $this.knownTranslations[string][locale] = value;
+
+                    $this.knownTranslations[string][locale] = value.trim();
                 }
             }
             else if (this.tab == 'strings') {
 
-                // setTimeout(function() {
-                    $this.updateStrings();
-                // }, "500");
+                $this.updateStrings();
 
             }
 
         });
 
         updateStrings() {
-
-            this.modules = Object.keys(this.stringsPerModule);
-            if (!this.modules.includes('unassigned')) this.modules.push('unassigned');
 
             $this.stringsPerModule['unassigned'] = $this.stringsPerModule['unassigned'] || {};
             $this.stringsPerModule['unassigned'].strings = $this.stringsPerModule['unassigned'].strings || [];
@@ -484,7 +458,10 @@
                     $this.translations[moduleName][locale] = $this.translations[moduleName][locale] || {};
 
                     $this.stringsPerModule[moduleName].strings.forEach(function(string) {
-                        if ($this.knownTranslations[string] && $this.knownTranslations[string][locale]) {
+
+                        if ($this.knownTranslations[string]
+                            && $this.knownTranslations[string].hasOwnProperty(locale)) {
+
                             $this.translations[moduleName][locale][string] = $this.knownTranslations[string][locale];
                         }
                     });
@@ -493,6 +470,7 @@
 
         }
 
+        // escape string for riot.js binding
         escaped(str) {
             return "'" + str.replace(/(['\[\]])/g,"\\$1") + "'";
         }

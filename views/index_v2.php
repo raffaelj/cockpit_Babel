@@ -10,24 +10,26 @@
 
             <app-loader class="kiss-margin-large" v-if="loading"></app-loader>
 
-            <a class="" @click="showJSON()">
-                <icon class="kiss-margin-small-right">manage_search</icon>
-                <?=t('Json Object')?>
-            </a>
+            <div class="kiss-align-right">
+                <a class="kiss-button" @click="showJSON()">
+                    <icon class="kiss-margin-small-right">manage_search</icon>
+                    <?=t('Json Object')?>
+                </a>
+            </div>
 
             <div class="kiss-margin-large" v-if="!loading">
 
-                <div class="kiss-margin" v-for="moduleData,moduleName in stringsPerModule">
+                <div class="kiss-margin" v-for="moduleName in modules">
 
                     <div class="kiss-flex kiss-flex-top">
                         <h3 class="" :id="'babel_toc_'+moduleName.toLowerCase()">{{ moduleName }}</h3>
                         <div class="kiss-flex-1 kiss-margin-left"></div>
-                        <span class="kiss-badge">{{ moduleData.strings.length }}</span>
+                        <span class="kiss-badge">{{ stringsPerModule[moduleName].strings.length }}</span>
                     </div>
 
                     <kiss-grid cols="2@xl 3@xxl">
 
-                        <kiss-card class="kiss-padding" theme="contrast shadowed" v-for="string,idx in moduleData.strings">
+                        <kiss-card class="kiss-padding" theme="contrast shadowed" v-for="string,idx in stringsPerModule[moduleName].strings">
                             <fieldset class="kiss-fieldset" v-if="string != '@meta'">
                                 <legend class="kiss-legend">{{ string }}</legend>
 
@@ -99,7 +101,7 @@
 
                     loading: true,
                     stringsPerModule: {},
-                    modules: [],
+                    modules: <?=json_encode($modules)?>,
 
                     translations: {},
 
@@ -147,9 +149,6 @@
 
                 updateStrings() {
 
-                    this.modules = Object.keys(this.stringsPerModule);
-                    if (!this.modules.includes('unassigned')) this.modules.push('unassigned');
-
                     this.stringsPerModule['unassigned'] = this.stringsPerModule['unassigned'] || {};
                     this.stringsPerModule['unassigned'].strings = this.stringsPerModule['unassigned'].strings || [];
 
@@ -179,7 +178,9 @@
                             this.translations[moduleName][locale] = this.translations[moduleName][locale] || {};
 
                             this.stringsPerModule[moduleName].strings.forEach(string => {
-                                if (this.knownTranslations[string] && this.knownTranslations[string][locale]) {
+                                if (this.knownTranslations[string]
+                                    && this.knownTranslations[string].hasOwnProperty(locale)) {
+
                                     this.translations[moduleName][locale][string] = this.knownTranslations[string][locale];
                                 }
                             });
@@ -249,7 +250,7 @@
     <ul>
     <?php foreach ($modules as $module): ?>
         <li>
-            <a class="kiss-link-muted kiss-flex kiss-flex-middle kiss-text-bold" href="#babel_toc_<?=strtolower($module)?>">
+            <a class="kiss-link-muted kiss-flex kiss-flex-middle" href="#babel_toc_<?=strtolower($module)?>">
                 <?=$module?>
             </a>
         </li>
