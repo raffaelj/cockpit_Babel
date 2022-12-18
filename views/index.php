@@ -75,7 +75,7 @@
         <div if="{ !loading }">
 
             <div show="{ tab == 'modules' }">
-                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }" data-tab="{ moduleName }">
+                <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }" data-module="{ moduleName }">
 
                     <h3 class="uk-panel-title">{ moduleName != 'unassigned' ? moduleName : App.i18n.get('Unassigned strings') }</h3>
                     <span class="uk-panel-badge uk-badge uk-badge-notification">{ stringsPerModule[moduleName].strings.length }</span>
@@ -94,14 +94,14 @@
                                     <div class="uk-flex uk-flex-middle" each="{ lang in locales }" if="{ lang != 'en' }" show="{ checkLangFilter(lang) }">
                                         <label class="lang_code_label">{ lang }:</label>
 
-                                        <input class="uk-width-1-1 { highlightEmptyStrings && !(knownTranslations[string] && knownTranslations[string][lang]) ? 'uk-form-danger' : '' }" type="text" bind="translations.{moduleName}.{lang}[{escaped(string)}]" onfocus="{ checkScroll }" />
+                                        <input class="uk-width-1-1 { highlighted(string,lang) && 'uk-form-danger' }" type="text" value="{ translations[moduleName][lang][string] }" onchange="{ updateTranslationsFromInput.bind(null, string, lang) }" onfocus="{ checkScroll }" />
                                     </div>
                                 </fieldset>
 
                                 { (listOfAffectedModules = listModulesContainingString(string, moduleName)) && '' }
                                 <div class="uk-panel-box-footer" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] || listOfAffectedModules.length }">
                                     <div class="uk-text-small" if="{ listOfAffectedModules.length }">
-                                        @lang('Modules:')
+                                        @lang('affects:')
                                         { listOfAffectedModules.join(', ') }
                                     </div>
                                     <div class="" if="{ stringsPerModule[moduleName].context && stringsPerModule[moduleName].context[idx] }">
@@ -144,12 +144,13 @@
 
                                     <div class="uk-flex uk-flex-middle" each="{ lang in locales }" show="{ checkLangFilter(lang) }">
                                         <label class="lang_code_label" if="{ lang != 'en' }">{ lang }:</label>
-                                        <input class="uk-width-1-1 { highlightEmptyStrings && !(knownTranslations[string] && knownTranslations[string][lang]) ? 'uk-form-danger' : '' }" type="text" bind="knownTranslations[{escaped(string)}].{lang}" if="{ lang != 'en' }" onfocus="{ checkScroll }" />
+
+                                        <input class="uk-width-1-1 { highlighted(string,lang) && 'uk-form-danger' }" type="text" value="{ knownTranslations[string][lang] }" onchange="{ updateTranslationsFromInput.bind(null, string, lang) }" if="{ lang != 'en' }" onfocus="{ checkScroll }" />
                                     </div>
                                 </fieldset>
                                 <div class="uk-panel-box-footer" if="{ listOfAffectedModules.length }">
                                     <div class="uk-text-small" if="{ listOfAffectedModules.length }">
-                                        @lang('Modules:')
+                                        @lang('affects:')
                                         { listOfAffectedModules.join(', ') }
                                     </div>
                                 </div>
@@ -340,7 +341,7 @@
             <div class="uk-modal-dialog uk-modal-dialog-large">
 
                 <label>@lang('Add new unassigned string')</label>
-                <input type="text" class="uk-width-1-1" bind="newString" />
+                <input ref="newString" type="text" class="uk-width-1-1" />
 
                 <div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-large uk-button-link uk-modal-close">{ App.i18n.get('Close') }</button></div>
             </div>
@@ -353,7 +354,7 @@
                     <span>@lang('Cancel')</span>
                 </a>
                 <div class="uk-flex-item-1"></div>
-                <button type="button" class="uk-button uk-button-large" onclick="{ addString }">@lang('Add string')</button>
+                <button type="button" class="uk-button uk-button-large" onclick="{ openModal }">@lang('Add string')</button>
             </div>
         </cp-actionbar>
     </form>
@@ -365,8 +366,6 @@
         var $this = this, modal;
 
         this.mixin(RiotBindMixin);
-
-        this.newString = '';
 
         this.loading = true;
         this.stringsPerModule = {};
@@ -393,21 +392,7 @@
             modal = UIkit.modal(this.refs.modal);
             modal.on({
                 'hide.uk.modal': function() {
-
-                    $this.newString = $this.newString.trim()
-
-                    // TODO: check, if new string is a duplicate
-
-                    if ($this.newString) {
-                        $this.stringsPerModule['unassigned'].strings.push($this.newString);
-                        $this.newString = '';
-
-                        // switch to "unassigned" module and focus first input of new string
-                        $this.tab = 'modules';
-                        $this.update();
-                        var newInput = document.querySelector('div[data-tab=unassigned] .uk-grid > div:last-child input');
-                        if (newInput) newInput.focus();
-                    }
+                    $this.addString();
                 }
             });
 
@@ -415,7 +400,7 @@
 
                 if (data) $this.stringsPerModule = data;
 
-                $this.updateStrings();
+                $this.initStrings();
 
                 $this.loading = false;
                 $this.update();
@@ -423,39 +408,30 @@
 
         });
 
-        this.on('bindingupdated', function(args) {
+        updateTranslationsFromInput(string, locale, e) {
 
-            if (this.tab == 'modules') {
+            let value = e.target.value.trim();
+            e.target.value = value;
 
-                var matches = args[0].match(/^translations\.(?<module>.*)\.(?<locale>.*)\['(?<string>.*)'\]$/);
+            this.knownTranslations[string] = this.knownTranslations[string] ?? {};
+            this.knownTranslations[string][locale] = value;
 
-                if (matches && matches.groups) {
-                    var string = matches.groups.string,
-                        locale = matches.groups.locale,
-                        value  = args[1];
-
-                    $this.knownTranslations[string] = $this.knownTranslations[string] ?? {};
-
-                    $this.knownTranslations[string][locale] = value.trim();
-
-                    // TODO: update duplicates in other modules
-                }
-            }
-            else if (this.tab == 'strings') {
-
-                $this.updateStrings();
-
+            let affectedModules = this.listModulesContainingString(string);
+            if (affectedModules.length) {
+                affectedModules.forEach(m => {
+                    this.translations[m][locale][string] = value;
+                });
             }
 
-        });
+        }
 
-        updateStrings() {
+        initStrings() {
 
-            $this.stringsPerModule['unassigned'] = $this.stringsPerModule['unassigned'] || {};
-            $this.stringsPerModule['unassigned'].strings = $this.stringsPerModule['unassigned'].strings || [];
+            this.stringsPerModule['unassigned'] = this.stringsPerModule['unassigned'] || {};
+            this.stringsPerModule['unassigned'].strings = this.stringsPerModule['unassigned'].strings || [];
 
             // add unassigned strings and @meta keys to virtual "unassigned" module
-            Object.keys($this.knownTranslations).forEach(function(string) {
+            Object.keys(this.knownTranslations).forEach(function(string) {
 
                 // add unassigned keys
                 var isAssigned = false;
@@ -585,7 +561,7 @@
                     $this.translations      = data.translations;
                     $this.knownTranslations = data.dictionaries;
 
-                    $this.updateStrings();
+                    $this.initStrings();
                     $this.update();
 
                 } else {
@@ -646,7 +622,7 @@
 
                     if (data) $this.stringsPerModule = data;
 
-                    $this.updateStrings();
+                    $this.initStrings();
 
                     $this.loading = false;
 
@@ -672,8 +648,33 @@
             });
         }
 
-        addString() {
+        openModal() {
             modal.show();
+        }
+
+        addString() {
+
+            let newString = this.refs.newString.value.trim();
+            this.refs.newString.value = '';
+
+            if (newString) {
+
+                let isDuplicate = !!(this.listModulesContainingString(newString)).length;
+
+                if (isDuplicate) {
+                    App.ui.notify('String exists already', 'danger');
+                    return;
+                }
+
+                this.stringsPerModule['unassigned'].strings.push(newString);
+
+                // switch to "unassigned" module and focus first input of new string
+                this.tab = 'modules';
+                this.update();
+                var newInput = document.querySelector('div[data-module=unassigned] .uk-grid > div:last-child input');
+                if (newInput) newInput.focus();
+            }
+
         }
 
         deleteUnassignedString(e) {
@@ -699,6 +700,11 @@
         toggleLayout(e) {
             if (e) e.preventDefault();
             this.layout = this.layout == 'grid' ? 'list' : 'grid';
+        }
+
+        highlighted(string, lang) {
+            if (!this.highlightEmptyStrings) return false;
+            return !(this.knownTranslations[string] && this.knownTranslations[string][lang]);
         }
 
     </script>

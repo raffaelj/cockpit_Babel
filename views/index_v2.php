@@ -47,7 +47,7 @@
                                 <div class="" v-for="lang in locales" v-if="lang != 'en'">
                                     <label class="">{{ lang }}:</label>
 
-                                    <input class="kiss-input" type="text" v-model="translations[moduleName][lang][string]" @focus="checkScroll" />
+                                    <input class="kiss-input" type="text" :value="translations[moduleName][lang][string]" @change="updateTranslationsFromInput($event, lang, string)" @focus="checkScroll" />
 
                                 </div>
                             </fieldset>
@@ -57,14 +57,14 @@
                                     <legend class="kiss-legend">language</legend>
                                     <div class="" v-for="lang in locales" v-if="lang != 'en'">
                                         <label class="">{{ lang }}:</label>
-                                        <input class="kiss-input" type="text" v-model="translations.unassigned[lang]['@meta'].language" />
+                                        <input class="kiss-input" type="text" v-model.trim="translations.unassigned[lang]['@meta'].language" />
                                     </div>
                                 </fieldset>
                                 <fieldset class="kiss-fieldset">
                                     <legend class="kiss-legend">author</legend>
                                     <div class="" v-for="lang in locales" v-if="lang != 'en'">
                                         <label class="">{{ lang }}:</label>
-                                        <input class="kiss-input" type="text" v-model="translations.unassigned[lang]['@meta'].author" />
+                                        <input class="kiss-input" type="text" v-model.trim="translations.unassigned[lang]['@meta'].author" />
                                     </div>
                                 </fieldset>
                                 <p>TODO: date/week/months strings</p>
@@ -108,8 +108,6 @@
         export default {
             data() {
                 return {
-                    // newString: '',
-
                     loading: true,
                     stringsPerModule: {},
                     modules: <?=json_encode($modules)?>,
@@ -152,13 +150,13 @@
 
                         this.stringsPerModule = data;
 
-                        this.updateStrings();
+                        this.initStrings();
 
                         this.loading = false;
                     })
                 },
 
-                updateStrings() {
+                initStrings() {
 
                     this.stringsPerModule['unassigned'] = this.stringsPerModule['unassigned'] || {};
                     this.stringsPerModule['unassigned'].strings = this.stringsPerModule['unassigned'].strings || [];
@@ -200,6 +198,32 @@
 
                 },
 
+                updateTranslationsFromInput(e, locale, string) {
+
+                    let value = e.target.value.trim();
+                    e.target.value = value;
+
+                    this.knownTranslations[string] = this.knownTranslations[string] ?? {};
+                    this.knownTranslations[string][locale] = value;
+
+                    let affectedModules = this.listModulesContainingString(string);
+                    if (affectedModules.length) {
+                        affectedModules.forEach(m => {
+                            this.translations[m][locale][string] = value;
+                        });
+                    }
+
+                },
+
+                listModulesContainingString(str, moduleName = null) {
+
+                    return this.modules.filter(module => {
+                        if (moduleName && module == moduleName) return false;
+                        return this.stringsPerModule[module].strings.includes(str);
+                    });
+
+                },
+
                 showJSON() {
                     VueView.ui.offcanvas('system:assets/dialogs/json-viewer.js', {data: this.translations}, {}, {flip: true, size: 'large'})
                 },
@@ -222,7 +246,7 @@
                             this.translations      = data.translations;
                             this.knownTranslations = data.dictionaries;
 
-                            this.updateStrings();
+                            this.initStrings();
 
                         } else {
                             App.ui.notify("Saving failed.", "danger");
