@@ -181,9 +181,7 @@ class Babel extends \Lime\Helper {
         }
 
         // cockpit v1
-        $defaultLang = $this->app->retrieve('i18n', 'en');
-        $currentLang = $this->app->helper('i18n')->locale;
-
+        $defaultLang  = $this->app->retrieve('i18n', 'en');
         $appLanguages = $this->app['languages'] ?? [];
 
         foreach ($appLanguages as $l => $label) {
