@@ -163,33 +163,15 @@ class Babel extends \Lime\Helper {
 
     public function getLanguages() {
 
+        $config = $this->app->retrieve('babel/languages', []);
+
+        if (!is_array($config)) return [];
+
         $languages = [];
-
-        // cockpit v2
-        if ($this->isCockpitV2) {
-            $locales = $this->helper('locales')->locales();
-
-            foreach ($locales as $locale) {
-                if ($locale['i18n'] == 'default') continue;
-                $languages[] = [
-                    'code'    => $locale['i18n'],
-                    'name'    => $locale['name'],
-                ];
-
-            }
-            return $languages;
-        }
-
-        // cockpit v1
-        $defaultLang  = $this->app->retrieve('i18n', 'en');
-        $appLanguages = $this->app['languages'] ?? [];
-
-        foreach ($appLanguages as $l => $label) {
-
-            $code = $l == 'default' ? $defaultLang : $l;
+        foreach ($config as $code => $label) {
             $languages[] = [
-                'code'    => $code,
-                'name'    => $label,
+                'code' => $code,
+                'name' => $label,
             ];
         }
 

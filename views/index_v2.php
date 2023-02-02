@@ -28,7 +28,24 @@
                 </a>
             </div>
 
-            <div class="kiss-margin-large" v-if="!loading">
+            <kiss-card v-if="!languages.length">
+                <p class=""><?=t('No system languages defined in config file')?></p>
+                <?php if ($this->helper('acl')->isSuperAdmin()) { ?>
+                <a class="kiss-button" href="<?=$this->route('/finder')?>"><?=t('Edit settings')?></a>
+                <p><?=t('Example configuration:')?></p>
+<pre><code>return [
+    'app.name' => 'My app',
+    'babel' => [
+        'languages' => [
+            'de' => 'Deutsch',
+            'fr' => 'Francais',
+        ],
+    ],
+];</code></pre>
+                <?php } ?>
+            </kiss-card>
+
+            <div class="kiss-margin-large" v-if="!loading && languages.length">
 
                 <div class="kiss-margin" v-for="moduleName in modules">
 

@@ -11,21 +11,34 @@ Manage translations of [Cockpit CMS v1][1], [Cockpit CMS v2][4] and [CpMultiplan
   * Click on "Restructure i18n files" button. Now the Babel addon is initialized and the file/folder structure is adapted to new locations.
 * Translate strings and click the "Save" button
 
-## Concepts
-
-### Cockpit CMS v1
-
-__`config.php`:__
+## Config
 
 ```php
-<?php return [
+<?php
+return [
+    'app.name' => 'My app',
+
+    // set entry level languages in cockpit cms v1
+    // use the gui instead to change locales in cockpit cms v2
     'i18n' => 'de',
     'languages' => [
         'default' => 'Deutsch',
-        'fr'      => 'Francais',
+        'fr' => 'Francais',
+    ],
+
+    // set admin ui languages
+    'babel' => [
+        'languages' => [
+            'de' => 'Deutsch',
+            'fr' => 'Francais',
+        ],
     ],
 ];
 ```
+
+## Concepts
+
+### Cockpit CMS v1
 
 __File/folder structure:__
 
@@ -51,16 +64,6 @@ __File/folder structure:__
 ```
 
 ### Cockpit CMS v2
-
-__`config.php`:__
-
-```php
-<?php return [
-    'i18n' => 'de',
-];
-```
-
-* Go to Settings --> Locales --> Add Locale; than create locale "fr"/"Francais
 
 __File/folder structure:__
 
@@ -168,5 +171,5 @@ See [LICENSE][3] for more information.
 
 [1]: https://github.com/agentejo/cockpit/
 [2]: https://github.com/raffaelj/CpMultiplane/
-[3]: https://github.com/raffaelj/cockpit_Babel/blob/master/LICENSE
+[3]: https://github.com/raffaelj/cockpit_Babel/blob/main/LICENSE
 [4]: https://github.com/Cockpit-HQ/Cockpit

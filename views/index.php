@@ -29,6 +29,23 @@
 
     <form class="uk-form uk-container uk-container-center" onsubmit="{ submit }">
 
+        <div class="uk-panel-box uk-panel-card" if="{ !languages.length }">
+            <p class="uk-alert uk-alert-large">@lang('No system languages defined in config file')</p>
+            @if($app->module('cockpit')->isSuperAdmin())
+            <a class="uk-button uk-button-primary" href="@route('settings/edit')">@lang('Edit settings')</a>
+            <p>@lang('Example configuration:')</p>
+<pre><code>return [
+    'app.name' => 'My app',
+    'babel' => [
+        'languages' => [
+            'de' => 'Deutsch',
+            'fr' => 'Francais',
+        ],
+    ],
+];</code></pre>
+            @endif
+        </div>
+
         <div class="uk-margin">
             <ul class="uk-tab uk-margin-large-bottom">
                 <li class="{ tab=='modules' && 'uk-active'}"><a class="" onclick="{ toggleTab }" data-tab="modules">@lang('Modules')</a></li>
@@ -72,7 +89,7 @@
         loading...
         </div>
 
-        <div if="{ !loading }">
+        <div if="{ !loading && languages.length }">
 
             <div show="{ tab == 'modules' }">
                 <div class="uk-panel-box uk-panel-box-primary uk-panel uk-panel-card uk-margin" each="{ moduleName in modules }" show="{ checkModuleFilter(moduleName) }" data-module="{ moduleName }">

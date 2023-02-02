@@ -39,12 +39,13 @@ $this->on('app.admin.request', function() {
 // fix missing language names in user i18n selection
 $this->on('app.render.view/system:views/users/user.php with app:layouts/app.php', function($template, &$slots) {
 
-    $slots['languages'] = array_map(function($l) {
-        if ($path = $this->path("#config:i18n/{$l['i18n']}.php")) {
-            $lang = include($path);
-            $l['language'] = $lang['@meta']['language'] ?? $l['i18n'];
-        }
-        return $l;
-    }, $slots['languages']);
+    $slots['languages'] = [['i18n' => 'en', 'language' => 'English']];
+
+    foreach ($this->helper('babel')->getLanguages() as $lang) {
+        $slots['languages'][] = [
+            'i18n' => $lang['code'],
+            'language' => $lang['name'],
+        ];
+    }
 
 });
