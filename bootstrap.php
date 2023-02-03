@@ -9,7 +9,7 @@
  * @see       https://github.com/raffaelj/cockpit_Babel
  * @see       https://github.com/agentejo/cockpit/
  * @see       https://github.com/Cockpit-HQ/Cockpit
- * @see       https://github.com/raffaelj/CpMultiplane/
+ * @see       https://codeberg.org/multiplane/cockpit-cms-Multiplane/
  */
 
 $isCockpitV2 = class_exists('Cockpit');

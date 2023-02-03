@@ -48,7 +48,7 @@ __File/folder structure:__
 
 * `config/cockpit/i18n/{locale}.php`
   * must exist for user language selection
-* wysiwyg field (tinymce): `storage/assets/cockpit/i18n/tinymce/{locale}.js`
+* wysiwyg field (tinymce): `#pstorage:assets/cockpit/i18n/tinymce/{locale}.js`
 
 ```text
 .

@@ -83,6 +83,22 @@ class Babel extends \Lime\Helper {
             }
             else {
 
+                if ($this->isCockpitV2) {
+                    // cockpit v2
+                    // TODO: improve regex
+                    $regex = '/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+                }
+                else {
+
+                    // cockpit v1
+                    // $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+
+                    // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
+                    // see: https://regex101.com/r/Gtf5L6/1
+                    $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+
+                }
+
                 // TODO: skip "node_modules", "lib/vendor"
 
                 $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir), \RecursiveIteratorIterator::SELF_FIRST);
@@ -93,20 +109,6 @@ class Babel extends \Lime\Helper {
 
                     $contents = file_get_contents($file->getRealPath());
 
-                    if ($this->isCockpitV2) {
-                        // cockpit v2
-                        $regex = '/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
-                    }
-                    else {
-
-                        // cockpit v1
-                        // $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
-
-                        // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
-                        // see: https://regex101.com/r/Gtf5L6/1
-                        $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
-
-                    }
                     preg_match_all($regex, $contents, $matches);
 
                     if (!isset($matches[2])) continue;
