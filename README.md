@@ -1,6 +1,6 @@
-# Babel addon for Cockpit CMS v1
+# Babel addon for Cockpit CMS v1 and v2
 
-Manage translations of [Cockpit CMS v1][1], [Cockpit CMS v2][4] and [CpMultiplane][2] modules with a graphical user interface.
+Manage translations of [Cockpit CMS v1][1], [Cockpit CMS v2][4] modules and [Multiplane][2] themes with a graphical user interface.
 
 ## Usage
 
@@ -90,18 +90,6 @@ __File/folder structure:__
 
 I like the new folder structure of Cockpit v2 and adapted it in this addon.
 
-__`config.php`:__
-
-```php
-<?php return [
-    'i18n' => 'de',
-    'languages' => [
-        'default' => 'Deutsch',
-        'fr'      => 'Francais',
-    ],
-];
-```
-
 __File/folder structure:__
 
 ```text
@@ -170,6 +158,6 @@ See [LICENSE][3] for more information.
 
 
 [1]: https://github.com/agentejo/cockpit/
-[2]: https://github.com/raffaelj/CpMultiplane/
+[2]: https://codeberg.org/multiplane/cockpit-cms-Multiplane
 [3]: https://github.com/raffaelj/cockpit_Babel/blob/main/LICENSE
 [4]: https://github.com/Cockpit-HQ/Cockpit

@@ -321,9 +321,9 @@ class Babel extends \Lime\Helper {
             $i18n->load($translationspath, $locale);
 
             // load i18n strings for active modules
-            foreach ($this->app->retrieve('modules')->getArrayCopy() as $m) {
+            foreach ($this->app->retrieve('modules')->getArrayCopy() as $module) {
 
-                $name = basename($m->_dir);
+                $name = basename($module->_dir);
 
                 if ($modules && !in_array(strtolower($name), $modules)) continue;
 
