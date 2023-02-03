@@ -95,10 +95,6 @@ __File/folder structure:__
 ```text
 .
 ├── config
-|   ├── cockpit
-|   |   └── i18n
-|   |       ├── de.php (must exist - empty dummy file)
-|   |       └── fr.php (must exist - empty dummy file)
 |   ├── i18n
 |   |   ├── {module}
 |   |   |   ├── de.php

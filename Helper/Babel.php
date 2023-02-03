@@ -367,30 +367,15 @@ class Babel extends \Lime\Helper {
                 $written = $fs->write("#config:i18n/{$i18n}.php", $content);
             }
 
-            // create empty dummy file in old location
             if ($written) {
                 $message[] = "copied {$i18n} from #config:cockpit/i18n to #config:i18n";
 
-                $written = $fs->write("#config:cockpit/i18n/{$i18n}.php", '<?php return []; // empty dummy file for user i18n selection');
-                if ($written) {
-                    $message[] = "created empty dummy {$i18n} in #config:cockpit/i18n";
-                }
+                // delete old i18n file
+                try {
+                    $fs->delete($path);
+                    $message[] = "deleted {$i18n} from #config:cockpit/i18n";
+                } catch(Exception $e) {$message[] = $e->getMessage();}
 
-            }
-
-        }
-
-        foreach ($this->getLanguages() as $lang) {
-
-            $i18n = $lang['code'];
-
-            // create empty dummy files inside `#config:cockpit/i18n/{locale}.php`
-            // to be able to select a language in user settings
-            if (!$this->app->path("#config:cockpit/i18n/{$i18n}.php")) {
-                $written = $fs->write("#config:cockpit/i18n/{$i18n}.php", '<?php return []; // empty dummy file for user i18n selection');
-                if ($written) {
-                    $message[] = "created empty dummy {$i18n} in #config:cockpit/i18n";
-                }
             }
 
         }
