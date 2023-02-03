@@ -5,11 +5,13 @@ namespace Babel\Helper;
 class Babel extends \Lime\Helper {
 
     public $isCockpitV2;
+    public $isMultiplane;
 
     public $ksortOpts = SORT_STRING | SORT_FLAG_CASE;
 
     public function initialize() {
-        $this->isCockpitV2 = class_exists('Cockpit');
+        $this->isCockpitV2  = class_exists('Cockpit');
+        $this->isMultiplane = isset($this->app['modules']['multiplane']);
     }
 
     public function getModulesDirs() {
@@ -29,12 +31,6 @@ class Babel extends \Lime\Helper {
 
         if ($customModulesPath = $this->app->retrieve('loadmodules')) {
             $dirs[] = $customModulesPath;
-        }
-
-        if (isset($this->app['modules']['cpmultiplanegui'])) {
-            if ($MP_DIR = $this->app->module('cpmultiplanegui')->findMultiplaneDir()) {
-                $dirs[] = $MP_DIR.'/modules';
-            }
         }
 
         foreach ($dirs as $modulesDir) {
@@ -59,13 +55,22 @@ class Babel extends \Lime\Helper {
 
         $extensions = ['php', 'js', 'tag'];
 
-        $modules = $this->getModulesDirs();
+        $modules = [];
+        foreach ($this->getModulesDirs() as $dir) {
+            $modules[$dir] = 'module';
+        }
+        if ($this->isMultiplane) {
+            foreach ($this->getMultiplaneThemesPaths() as $dir) {
+                $modules[$dir] = 'mp-theme';
+            }
+        }
 
         $out = [];
 
-        foreach ($modules as $dir) {
+        foreach ($modules as $dir => $type) {
 
             $name = basename($dir);
+            if ($type == 'mp-theme') $name = "mp-theme-{$name}";
 
             if ($module && $name != $module) continue;
 
@@ -110,7 +115,6 @@ class Babel extends \Lime\Helper {
                         $strings[] = $string;
 
                         if ($withContext) {
-                            // $context[] = $file->getRealPath();
                             $context[] = \str_replace($this->app['docs_root'], '', $file->getRealPath());
                         }
                     }
@@ -233,18 +237,6 @@ class Babel extends \Lime\Helper {
                 }
             }
 
-            // read CpMultiplane i18n files
-            if ($path = $this->getMultiplaneI18nPath($locale)) {
-                $tmp = include($path);
-                if (!empty($tmp) && is_array($tmp)) {
-
-                    foreach ($tmp as $str => $translation) {
-                        $strings[$str] = $strings[$str] ?? [];
-                        $strings[$str][$locale] = $translation;
-                    }
-                }
-            }
-
         }
 
         ksort($strings, $this->ksortOpts);
@@ -255,10 +247,10 @@ class Babel extends \Lime\Helper {
 
     public function save($data) {
 
-        // TODO: filter event
+        $this->app->trigger('babel.save.before', [&$data]);
 
+        // modules and addons
         $modules = $this->getModulesNames();
-
         foreach ($data as $moduleName => &$value) {
 
             if (!in_array($moduleName, $modules)) continue;
@@ -273,6 +265,23 @@ class Babel extends \Lime\Helper {
             }
         }
 
+        // Multiplane themes
+        $themes = $this->getMultiplaneThemesNames();
+        foreach ($data as $themeName => &$value) {
+
+            if (!in_array($themeName, $themes)) continue;
+
+            foreach ($value as $locale => &$strings) {
+
+                $strings = $this->removeEmptyStrings($strings);
+
+                ksort($strings, $this->ksortOpts);
+
+                $this->app->helper('fs')->write("#config:i18n/Multiplane/{$themeName}/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
+            }
+        }
+
+        // unassigned strings
         if (isset($data['unassigned'])) {
             foreach ($data['unassigned'] as $locale => &$strings) {
 
@@ -384,60 +393,54 @@ class Babel extends \Lime\Helper {
                 }
             }
 
-            // move Multiplane i18n files
-            if ($path = $this->getMultiplaneI18nPath($i18n)) {
-
-                $written = false;
-
-                // merge i18n files from old and new location
-                if ($translationspath = $this->app->path("#config:i18n/Multiplane/{$i18n}.php")) {
-
-                    $tmp1 = include($translationspath);
-                    $tmp2 = include($path);
-                    $strings = array_merge($tmp2, $tmp1);
-                    ksort($strings, $this->ksortOpts);
-
-                    $written = $fs->write("#config:i18n/Multiplane/{$i18n}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
-                }
-
-                // copy old i18n files to new location
-                else {
-                    $content = $fs->read($path);
-                    $written = $fs->write("#config:i18n/Multiplane/{$i18n}.php", $content);
-                }
-
-                if ($written) {
-                    $message[] = "copied {$i18n} from Multiplane:config/i18n to #config:i18n/Multiplane";
-
-                    // delete old Multiplane i18n file
-                    try {
-                        $fs->delete($path);
-                        $message[] = "deleted {$i18n} from Multiplane:config/i18n";
-                    } catch(Exception $e) {$message[] = $e->getMessage();}
-
-                }
-            }
-
         }
 
         return $message;
 
     }
 
-    public function getMultiplaneI18nPath($locale) {
+    /**
+     * List Multiplane themes paths
+     *
+     * @return array
+     */
+    public function getMultiplaneThemesPaths() {
 
-        $path = null;
+        static $themes;
+        if (!is_null($themes)) return $themes;
 
-        if (defined('MP_CONFIG_DIR') || defined('MP_ENV_ROOT')) {
-            if (defined('MP_CONFIG_DIR')) {
-                $path = $this->app->path(MP_CONFIG_DIR."/i18n/{$locale}.php");
-            }
-            elseif (defined('MP_ENV_ROOT')) {
-                $path = $this->app->path(MP_ENV_ROOT."/config/i18n/{$locale}.php");
+        $themes = [];
+
+        $paths = $this->app->paths('#themes');
+
+        foreach ($paths as $dir) {
+            $iter = new \DirectoryIterator($dir);
+            foreach ($iter as $file) {
+                if ($file->isDot() || $file->isFile()) continue;
+                $name = $file->getRealPath();
+                if (in_array($name, $themes)) continue;
+                $themes[] = $name;
             }
         }
 
-        return $path;
+        return $themes;
+
+    }
+
+    /**
+     * List Multiplane themes with prefix
+     *
+     * @param string $prefix
+     * @return array
+     */
+    public function getMultiplaneThemesNames($prefix = 'mp-theme-') {
+
+        $names = [];
+        foreach ($this->getMultiplaneThemesPaths() as $dir) {
+            $names[] = $prefix.basename($dir);
+        }
+
+        return $names;
 
     }
 

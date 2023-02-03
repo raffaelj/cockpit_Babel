@@ -9,10 +9,12 @@ if (class_exists('Cockpit')) {
 class Admin extends \Cockpit\AuthController {
 
     public $isCockpitV2;
+    public $isMultiplane;
 
     protected function before() {
 
-        $this->isCockpitV2 = class_exists('Cockpit');
+        $this->isCockpitV2  = class_exists('Cockpit');
+        $this->isMultiplane = isset($this->app['modules']['multiplane']);
 
         if ($this->isCockpitV2) {
             if (!$this->isAllowed('babel/manage')) {
@@ -30,6 +32,12 @@ class Admin extends \Cockpit\AuthController {
 
         $modules = $this->app->helper('babel')->getModulesNames();
         sort($modules);
+
+        if ($this->isMultiplane) {
+            $themes = $this->app->helper('babel')->getMultiplaneThemesNames();
+            $modules = array_merge($modules, $themes);
+        }
+
         $modules[] = 'unassigned';
 
         $view = $this->isCockpitV2 ? 'babel:views/index_v2.php' : 'babel:views/index.php';
