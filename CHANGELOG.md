@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+* decoupled content languages from app languages - app languages must be declared in `config.php`
+* refactored Multiplane v1 path/i18n detection
+* dropped using empty dummy files (cockpit v1)
+* requires PHP >= 7.4 (arrow functions)
+* minor code refactoring and cleanup
+
 ## 0.2.2
 
 * fixed missing language names in user i18n selection (user/account page)
