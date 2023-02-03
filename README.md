@@ -36,6 +36,10 @@ return [
 ];
 ```
 
+## Requirements
+
+* PHP >= 7.4
+
 ## Concepts
 
 ### Cockpit CMS v1
