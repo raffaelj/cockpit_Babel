@@ -239,6 +239,23 @@ class Babel extends \Lime\Helper {
                 }
             }
 
+            // load Multiplane themes
+            if ($this->isMultiplane) {
+                $themes = $this->getMultiplaneThemesNames();
+                foreach ($themes as $name) {
+                    if ($path = $this->app->path("#config:i18n/Multiplane/{$name}/{$locale}.php")) {
+                        $tmp = include($path);
+                        if (!empty($tmp) && is_array($tmp)) {
+
+                            foreach ($tmp as $str => $translation) {
+                                $strings[$str] = $strings[$str] ?? [];
+                                $strings[$str][$locale] = $translation;
+                            }
+                        }
+                    }
+                }
+            }
+
         }
 
         ksort($strings, $this->ksortOpts);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+* fixed missing Multiplane themes translations in UI
+
 ## 0.3.0
 
 * decoupled content languages from app languages - app languages must be declared in `config.php`
