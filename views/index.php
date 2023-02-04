@@ -154,9 +154,9 @@
 
                                     <legend class="uk-panel-title" if="{ !allowDeletions }">{ string }</legend>
 
-                                    <div class="uk-flex" if="{ allowDeletions && !listOfAffectedModules.length }">
+                                    <div class="uk-flex" if="{ allowDeletions }">
                                         <legend class="uk-flex-item-1">{ string }</legend>
-                                        <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')"></a>
+                                        <a href="#" class="uk-icon-trash uk-text-danger" onclick="{ deleteUnassignedString }" title="@lang('Delete')" if="{ !listOfAffectedModules.length }"></a>
                                     </div>
 
                                     <div class="uk-flex uk-flex-middle" each="{ lang in locales }" show="{ checkLangFilter(lang) }">
