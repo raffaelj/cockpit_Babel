@@ -175,8 +175,9 @@
 
                 initStrings() {
 
-                    this.stringsPerModule['unassigned'] = this.stringsPerModule['unassigned'] || {};
-                    this.stringsPerModule['unassigned'].strings = this.stringsPerModule['unassigned'].strings || [];
+                    this.stringsPerModule['unassigned'] = {
+                        strings: []
+                    };
 
                     // add unassigned strings and @meta keys to virtual "unassigned" module
                     Object.keys(this.knownTranslations).forEach(string => {
