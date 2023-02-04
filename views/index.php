@@ -360,7 +360,7 @@
                 <label>@lang('Add new unassigned string')</label>
                 <input ref="newString" type="text" class="uk-width-1-1" />
 
-                <div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-large uk-button-link uk-modal-close">{ App.i18n.get('Close') }</button></div>
+                <div class="uk-modal-footer uk-text-right"><button class="uk-button uk-button-large uk-button-link uk-modal-close">{ App.i18n.get('OK') }</button></div>
             </div>
         </div>
 
