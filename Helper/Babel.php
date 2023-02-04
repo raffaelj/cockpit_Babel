@@ -281,6 +281,10 @@ class Babel extends \Lime\Helper {
                 ksort($strings, $this->ksortOpts);
 
                 $this->app->helper('fs')->write("#config:i18n/{$moduleName}/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
+
+                if (function_exists('opcache_invalidate')) {
+                    opcache_invalidate($this->app->path("#config:i18n/{$moduleName}/{$locale}.php"));
+                }
             }
         }
 
@@ -297,6 +301,10 @@ class Babel extends \Lime\Helper {
                 ksort($strings, $this->ksortOpts);
 
                 $this->app->helper('fs')->write("#config:i18n/Multiplane/{$themeName}/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
+
+                if (function_exists('opcache_invalidate')) {
+                    opcache_invalidate($this->app->path("#config:i18n/Multiplane/{$themeName}/{$locale}.php"));
+                }
             }
         }
 
@@ -309,6 +317,10 @@ class Babel extends \Lime\Helper {
                 ksort($strings, $this->ksortOpts);
 
                 $this->app->helper('fs')->write("#config:i18n/{$locale}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
+
+                if (function_exists('opcache_invalidate')) {
+                    opcache_invalidate($this->app->path("#config:i18n/{$locale}.php"));
+                }
             }
         }
 
