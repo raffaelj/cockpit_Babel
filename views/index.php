@@ -698,7 +698,10 @@
         deleteUnassignedString(e) {
             if (e) e.preventDefault();
 
-            this.stringsPerModule.unassigned.strings.splice(e.item.idx, 1);
+            // modules tab has item.idx, strings tab doesn't
+            var idx = e.item.idx || this.stringsPerModule.unassigned.strings.indexOf(e.item.string);
+
+            this.stringsPerModule.unassigned.strings.splice(idx, 1);
             delete this.knownTranslations[e.item.string];
             this.locales.forEach(function(lang) {
                 delete $this.translations.unassigned[lang][e.item.string];
