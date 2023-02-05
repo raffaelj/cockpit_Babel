@@ -25,6 +25,35 @@
             padding-bottom: 0;
             line-height: 28px;
         }
+
+        #babel-filters {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 20em;
+            max-width: 100%;
+            z-index: 1000; /* <app-header> has 980 */
+            background-color: rgba(255,255,255,0.95);
+            padding: 1em;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        .button-blank {
+            background: none;
+            border: none;
+            padding: .5em;
+            min-height: auto;
+            font-size: 1em;
+        }
+
+        .module-buttons {
+            line-height: 2em;
+        }
+        .babel-button {
+            line-height: 1.8em;
+        }
     </style>
 
     <form class="uk-form uk-container uk-container-center" onsubmit="{ submit }">
@@ -56,37 +85,44 @@
             </ul>
         </div>
 
-        <div class="uk-margin">
-            <button type="button" class="uk-button uk-icon-{ layout == 'grid' ? 'th' : 'list' }" onclick="{ toggleLayout }" title="@lang('Toggle layout')" data-uk-tooltip>
-            </button>
-            <button type="button" class="uk-button uk-button-small uk-button-{ highlightEmptyStrings ? 'success' : 'primary' }" onclick="{ toggleHighlightEmptyStrings }">@lang('Highlight empty fields')</button>
-            <button type="button" class="uk-button uk-button-small uk-button-{ hideCompletedStrings ? 'success' : 'primary' }" onclick="{ toggleHideNonEmptyStrings }">@lang('Hide completed translations')</button>
-            <button type="button" class="uk-button uk-button-small uk-button-{ allowDeletions ? 'success' : 'primary' }" onclick="{ toggleAllowDeletions }">@lang('Allow deletions of unassigned strings')</button>
+        <div id="babel-filters" class="uk-hidden">
 
-            <span class="uk-display-inline-block">
-                @lang('Languages:')
-                <span class="">
-                    <button type="button" data-filter-lang="_all" onclick="{ toggleLangFilter }" class="uk-button uk-button-small" disabled="{ !filterLangs.length }">@lang('All')</button>
-                    <button type="button" data-filter-lang="{ lang.code }" class="uk-button uk-button-small uk-margin-small-right { filterLangs.length && checkLangFilter(lang.code) ? 'uk-button-success' : '' }" title="{ lang.name }" each="{ lang in languages }" if="{ lang.code != 'en' }" onclick="{ toggleLangFilter }" data-uk-tooltip>
-                        { lang.code }
-                    </button>
-                </span>
-            </span>
+            <div class="uk-panel">
 
-            <div class="uk-margin" show="{ tab == 'modules' }">
-                @lang('Modules:')
-                <span class="">
-                    <button type="button" data-filter-module="_all" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small" disabled="{ !filterModules.length }">@lang('All')</button>
-                    <button type="button" data-filter-module="{ moduleName }" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small uk-margin-small-right { filterModules.length && checkModuleFilter(moduleName) ? 'uk-button-success' : '' }" each="{ moduleName in modules }">
-                        { moduleName == 'unassigned' ? App.i18n.get('Unassigned') : moduleName }
-                    </button>
-                </span>
+                <button type="button" class="uk-icon-close uk-panel-badge uk-button button-blank" onclick="{ toggleFilterMenu }" aria-label="@lang('Close')"></button>
+
+                <button type="button" class="uk-button uk-icon-{ layout == 'grid' ? 'th' : 'list' }" onclick="{ toggleLayout }" title="@lang('Toggle layout')" data-uk-tooltip>
+                </button>
+
+                <button type="button" class="uk-button uk-button-small uk-button-{ highlightEmptyStrings ? 'success' : 'primary' } uk-margin-small babel-button" onclick="{ toggleHighlightEmptyStrings }">@lang('Highlight empty fields')</button>
+                <button type="button" class="uk-button uk-button-small uk-button-{ hideCompletedStrings ? 'success' : 'primary' } uk-margin-small babel-button" onclick="{ toggleHideNonEmptyStrings }">@lang('Hide completed translations')</button>
+                <button type="button" class="uk-button uk-button-small uk-button-{ allowDeletions ? 'success' : 'primary' } uk-margin-small babel-button" onclick="{ toggleAllowDeletions }">@lang('Allow deletions')</button>
+
+                <div class="uk-margin">
+                    @lang('Languages:')
+                    <span class="module-buttons">
+                        <button type="button" data-filter-lang="_all" onclick="{ toggleLangFilter }" class="uk-button uk-button-small" disabled="{ !filterLangs.length }">@lang('All')</button>
+                        <button type="button" data-filter-lang="{ lang.code }" class="uk-button uk-button-small uk-margin-small-right { filterLangs.length && checkLangFilter(lang.code) ? 'uk-button-success' : '' }" title="{ lang.name }" each="{ lang in languages }" if="{ lang.code != 'en' }" onclick="{ toggleLangFilter }" data-uk-tooltip>
+                            { lang.code }
+                        </button>
+                    </span>
+                </div>
+
+                <div class="uk-margin" show="{ tab == 'modules' }">
+                    @lang('Modules:')
+                    <span class="module-buttons">
+                        <button type="button" data-filter-module="_all" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small" disabled="{ !filterModules.length }">@lang('All')</button>
+                        <button type="button" data-filter-module="{ moduleName }" onclick="{ toggleModuleFilter }" class="uk-button uk-button-small uk-margin-small-right { filterModules.length && checkModuleFilter(moduleName) ? 'uk-button-success' : '' }" each="{ moduleName in modules }">
+                            { moduleName == 'unassigned' ? App.i18n.get('Unassigned') : moduleName }
+                        </button>
+                    </span>
+                </div>
+
             </div>
-
         </div>
 
-        <div if="{ loading }">
-        loading...
+        <div class="uk-text-center" show="{ loading }">
+            <span class="uk-icon-spinner uk-icon-spin"></span>
         </div>
 
         <div if="{ !loading && languages.length }">
@@ -370,8 +406,11 @@
                 <a class="uk-button uk-button-link" href="@route('/settings')">
                     <span>@lang('Cancel')</span>
                 </a>
+
+                <button type="button" class="uk-button uk-button-large" title="@lang('Filter')" onclick="{ toggleFilterMenu }"><i class="uk-icon-filter uk-text-large uk-text-middle"></i></button>
+
                 <div class="uk-flex-item-1"></div>
-                <button type="button" class="uk-button uk-button-large" onclick="{ openModal }">@lang('Add string')</button>
+                <button type="button" class="uk-button uk-button-large" onclick="{ openModal }" title="@lang('Add string')"><i class="uk-icon-plus uk-text-large uk-text-middle"></i></button>
             </div>
         </cp-actionbar>
     </form>
@@ -726,6 +765,10 @@
         highlighted(string, lang) {
             if (!this.highlightEmptyStrings) return false;
             return !(this.knownTranslations[string] && this.knownTranslations[string][lang]);
+        }
+
+        toggleFilterMenu() {
+            document.querySelector('#babel-filters').classList.toggle('uk-hidden');
         }
 
     </script>
