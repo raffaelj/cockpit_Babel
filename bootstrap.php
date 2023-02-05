@@ -2,7 +2,7 @@
 /**
  * Manage translations of Cockpit CMS v1 and v2 modules
  *
- * @version   0.3.0
+ * @version   0.3.2
  * @author    Raffael Jesche
  * @license   MIT
  *

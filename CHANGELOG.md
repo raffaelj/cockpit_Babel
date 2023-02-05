@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2
+
+* fixed UI (cockpit v1) and cache (cockpit v1+v2) issues when deleting or adding items
+* moved filter buttons from top into togglable, fixed sidebar (cockpit v1)
+* replaced "Add string" button with plus icon button (cockpit v1)
+* show spinner icon instead of "loading..." (cockpit v1)
+
 ## 0.3.1
 
 * fixed missing Multiplane themes translations in UI
