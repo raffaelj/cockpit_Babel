@@ -129,6 +129,10 @@ class Babel extends \Lime\Helper {
 
                 $this->app->helper('fs')->write("#config:i18n/_strings/{$name}.php", '<?php return '.$this->app->helper('utils')->var_export($strings, true).';');
 
+                if (function_exists('opcache_invalidate')) {
+                    opcache_invalidate($this->app->path("#config:i18n/_strings/{$name}.php"));
+                }
+
                 $out[$name]['strings'] = $strings;
             }
             else {
@@ -407,6 +411,10 @@ class Babel extends \Lime\Helper {
                     $message[] = "deleted {$i18n} from #config:cockpit/i18n";
                 } catch(Exception $e) {$message[] = $e->getMessage();}
 
+            }
+
+            if (function_exists('opcache_invalidate')) {
+                opcache_invalidate($this->app->path("#config:i18n/{$i18n}.php"));
             }
 
         }
