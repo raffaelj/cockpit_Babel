@@ -51,9 +51,41 @@ class Babel extends \Lime\Helper {
 
     }
 
+    /**
+     * Parse all files in module directories for i18n strings and
+     * store (cache) results in "#config:i18n/_strings/{$name}.php"
+     *
+     * @param string $module Name of a module, if set parse only this module
+     * @param bool   $force  Force reparsing of already cached modules
+     * @param bool   $withContext Return also file paths of found i18n strings (won't be cached)
+     * @return array
+     */
     public function getTranslatableStrings($module = null, $force = false, $withContext = false) {
 
-        $extensions = ['php', 'js', 'tag'];
+        $allowedExtensions = ['php', 'js', 'tag'];
+
+        $deniedDirs = [
+            'node_modules',
+            'vendor',
+            'lib/vendor',
+            '.git',
+        ];
+
+        if ($this->isCockpitV2) {
+            // cockpit v2
+            // TODO: improve regex
+            $regex = '/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+        }
+        else {
+
+            // cockpit v1
+            // $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+
+            // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
+            // see: https://regex101.com/r/Gtf5L6/1
+            $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+
+        }
 
         $modules = [];
         foreach ($this->getModulesDirs() as $dir) {
@@ -83,29 +115,37 @@ class Babel extends \Lime\Helper {
             }
             else {
 
-                if ($this->isCockpitV2) {
-                    // cockpit v2
-                    // TODO: improve regex
-                    $regex = '/(?:{{ t|\<\?=t|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
-                }
-                else {
+                $directory = new \RecursiveDirectoryIterator($dir);
+                $files = new \RecursiveCallbackFilterIterator($directory,
+                    function($current, $key, $iterator) use($dir, $allowedExtensions, $deniedDirs) {
 
-                    // cockpit v1
-                    // $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+                    $blacklist = [];
+                    foreach ($deniedDirs as $d) {
+                        $blacklist[] = $dir.'/'.ltrim($d, '/');
+                    }
 
-                    // improved cockpit v1 regex - matches variations of `$app('i18n')->get('str')`
-                    // see: https://regex101.com/r/Gtf5L6/1
-                    $regex = '/(?:\@lang|App\.i18n\.get|App\.ui\.notify|\$i18n->get|(?:(?:cockpit\(\)|\$app|\$this|\$this->app)(?:->helper|))\(\'i18n\'\)->get)\((["\'])((?:[^\1]|\\.)*?)\1(,\s*(["\'])((?:[^\4]|\\.)*?)\4)?\)/';
+                    // skip blacklisted folders
+                    if ($current->isDir() && in_array($current->getPathname(), $blacklist)) {
+                        return false;
+                    }
 
-                }
+                    // Allow recursion
+                    if ($iterator->hasChildren()) {
+                        return true;
+                    }
 
-                // TODO: skip "node_modules", "lib/vendor"
+                    // filter by file extension
+                    if ($current->isFile() && in_array($current->getExtension(), $allowedExtensions)) {
+                        return true;
+                    }
 
-                $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir), \RecursiveIteratorIterator::SELF_FIRST);
+                    return false;
+
+                });
+
+                $iterator = new \RecursiveIteratorIterator($files);
 
                 foreach ($iterator as $file) {
-
-                    if (!$file->isFile() || !in_array($file->getExtension(), $extensions)) continue;
 
                     $contents = file_get_contents($file->getRealPath());
 
