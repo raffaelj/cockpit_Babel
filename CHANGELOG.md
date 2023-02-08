@@ -1,5 +1,10 @@
 # Changelog
 
+## Upcoming
+
+* added more OPCache invalidations
+* improved directory iterator for i18n string parsing (ignore `node_modules/*`, `vendor/*`, `lib/vendor/*`, `.git/*`)
+
 ## 0.3.2
 
 * fixed UI (cockpit v1) and cache (cockpit v1+v2) issues when deleting or adding items
