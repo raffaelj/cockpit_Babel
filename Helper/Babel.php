@@ -62,7 +62,8 @@ class Babel extends \Lime\Helper {
      */
     public function getTranslatableStrings($module = null, $force = false, $withContext = false) {
 
-        $allowedExtensions = ['php', 'js', 'tag'];
+        $allowedExtensions = ['php', 'js'];
+        if (!$this->isCockpitV2) $allowedExtensions[] = 'tag';
 
         $deniedDirs = [
             'node_modules',

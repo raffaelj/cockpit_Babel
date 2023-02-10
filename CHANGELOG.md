@@ -4,6 +4,7 @@
 
 * added more OPCache invalidations
 * improved directory iterator for i18n string parsing (ignore `node_modules/*`, `vendor/*`, `lib/vendor/*`, `.git/*`)
+* ignore .tag files if cockpit v2
 
 ## 0.3.2
 
